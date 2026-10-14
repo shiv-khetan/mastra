@@ -197,9 +197,21 @@
     "agent-scopes-inngest",
     "agent-scopes-nestjs",
     "agent-scopes-server",
+    "automated-model-pricing-20261014-063630",
+    "automated-provider-registry-20261014-063630",
+    "calm-modes-rest",
+    "durable-llm-step-lazy-writer",
+    "kimi-copilot-models-dev-ids",
     "lemon-waves-punch",
+    "new-chats-default-model",
+    "notifications-composite-primary-key",
+    "olive-sides-stick",
+    "quiet-builds-only",
     "quiet-threads-wait",
     "rare-banks-carry",
-    "scoped-background-task-streams"
+    "scoped-background-task-streams",
+    "shaggy-zebras-trade",
+    "tool-before-approval-hook",
+    "tracking-hard-cap-flush"
   ]
 }

@@ -1,5 +1,33 @@
 # @mastra/core
 
+## 1.78.0-alpha.1
+
+### Minor Changes
+
+- Added a `beforeApproval` hook to tools that require approval. It runs before the agent pauses for approval and can reject the call by returning `{ proceed: false, output }`. The agent then skips the approval pause and does not execute the tool, and `output` goes back to the model as the tool result. Invalid calls are returned to the model to fix, and people are only asked to approve valid ones. ([#26927](https://github.com/mastra-ai/mastra/pull/26927))
+
+  ```ts
+  const issueRefund = createTool({
+    id: 'issue-refund',
+    inputSchema: z.object({ orderId: z.string(), amount: z.number() }),
+    requireApproval: true,
+    beforeApproval: async ({ orderId, amount }) => {
+      const order = await orders.find(orderId);
+      if (!order) return { proceed: false, output: { error: `Order ${orderId} not found` } };
+      if (amount > order.paid) return { proceed: false, output: { error: `Amount exceeds ${order.paid}` } };
+    },
+    execute: async ({ orderId, amount }) => refunds.issue(orderId, amount),
+  });
+  ```
+
+  The hook does not run again when the call resumes after an approval decision. If the hook throws, the error is logged and the call proceeds to the approval gate. Keep validating inside `execute` too, because state can change while the call is waiting for approval.
+
+### Patch Changes
+
+- Update provider registry and model documentation with latest models and providers ([`bed1ccc`](https://github.com/mastra-ai/mastra/commit/bed1cccea5817d68faa42a15fda3a0b329f70680))
+
+- Durable agent turns no longer create an unused tool stream writer on every LLM step. A writer is now created only when a step actually uses it. ([#26987](https://github.com/mastra-ai/mastra/pull/26987))
+
 ## 1.78.0-alpha.0
 
 ### Minor Changes
