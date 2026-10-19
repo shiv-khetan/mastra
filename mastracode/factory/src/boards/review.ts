@@ -74,6 +74,10 @@ const reviewTransitionPolicy: BoardTransitionPolicy = ({ actor, toStage }) => {
   };
 };
 
+function isSha(value: unknown): value is string {
+  return typeof value === 'string' && /^[0-9a-f]{7,64}$/i.test(value);
+}
+
 function reviewPullRequest(context: FactoryStageRuleContext) {
   // Only a Review-to-Review re-entry can supersede an active pass. A card
   // returning from Done has no live review to cancel; aborting its bound session
@@ -82,6 +86,18 @@ function reviewPullRequest(context: FactoryStageRuleContext) {
   // The re-review skill applies once a prior pass recorded a verdict. Cards
   // closed as Done before verdicts were recorded in place also count.
   const priorReviewCompleted = hasRecordedVerdict(context.item) || context.fromStage === 'done';
+  // Kickoffs for successive pushes must differ, or a reused review session can
+  // read the new pass as a duplicate and restate its last verdict. Metadata is
+  // untrusted, so only SHAs and known verdicts (REVIEW_VERDICTS in
+  // rules/tools.ts) reach the prompt.
+  const { pullRequestHeadSha, reviewedHeadSha, reviewVerdict } = context.item.metadata ?? {};
+  const rereviewHint =
+    priorReviewCompleted &&
+    isSha(pullRequestHeadSha) &&
+    isSha(reviewedHeadSha) &&
+    (reviewVerdict === 'approve' || reviewVerdict === 'request changes')
+      ? `\n\nRe-review requested: the PR head is now ${pullRequestHeadSha}; the previous verdict (${reviewVerdict}) was recorded on ${reviewedHeadSha}. This is a new pass: review the current head and record a new verdict.`
+      : '';
   const isGitlab = context.item.source === 'gitlab-pr';
   const skillName = isGitlab
     ? priorReviewCompleted
@@ -95,7 +111,7 @@ function reviewPullRequest(context: FactoryStageRuleContext) {
     idempotencyKey: `${context.ingress.id}:${skillName}`,
     role: 'review',
     skillName,
-    arguments: `${sourceRef(context.item)}\n\n${checkoutHint(context.item)}`,
+    arguments: `${sourceRef(context.item)}\n\n${checkoutHint(context.item)}${rereviewHint}`,
     // Same-stage re-entry mid-pass: the skill is already live in the card's
     // session, so continue it with a compact kickoff. After a recorded verdict
     // the next pass is a re-review, which needs its full skill delivered.
