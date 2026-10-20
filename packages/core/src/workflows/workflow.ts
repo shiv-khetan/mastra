@@ -19,6 +19,7 @@ import type { MastraScorers } from '../evals';
 import { EventEmitterPubSub } from '../events/event-emitter';
 import type { PubSub } from '../events/pubsub';
 import type { Event } from '../events/types';
+import type { MastraLanguageModel } from '../llm/model/shared.types';
 import type { IMastraLogger } from '../logger';
 import { RegisteredLogger } from '../logger';
 import type { Mastra } from '../mastra';
@@ -467,8 +468,8 @@ export function createStep<TProcessorId extends string>(
 ): Step<
   `processor:${TProcessorId}`,
   unknown,
-  InferPublicSchema<typeof ProcessorStepInputSchema>,
-  InferPublicSchema<typeof ProcessorStepOutputSchema>,
+  ProcessorStepOutput,
+  ProcessorStepOutput,
   unknown,
   unknown,
   DefaultEngineType
@@ -734,8 +735,8 @@ export function createStepFromProcessor<TProcessorId extends string>(
 ): Step<
   `processor:${TProcessorId}`,
   unknown,
-  z.infer<typeof ProcessorStepInputSchema>,
-  z.infer<typeof ProcessorStepOutputSchema>,
+  ProcessorStepOutput,
+  ProcessorStepOutput,
   unknown,
   unknown,
   DefaultEngineType
@@ -813,7 +814,7 @@ export function createStepFromProcessor<TProcessorId extends string>(
   const step = {
     id: `processor:${processor.id}`,
     description: processor.name ?? `Processor ${processor.id}`,
-    inputSchema: toStandardSchema(ProcessorStepInputSchema) as StandardSchemaWithJSON<ProcessorStepInput>,
+    inputSchema: toStandardSchema(ProcessorStepInputSchema) as StandardSchemaWithJSON<ProcessorStepOutput>,
     outputSchema: toStandardSchema(ProcessorStepOutputSchema) as StandardSchemaWithJSON<ProcessorStepOutput>,
     providesSkillDiscovery: processor.providesSkillDiscovery,
     execute: async ({
@@ -1340,7 +1341,8 @@ export function createStepFromProcessor<TProcessorId extends string>(
                 runId: agentRunId,
                 systemMessages: (systemMessages ?? []) as CoreMessage[],
                 // Pass model/tools configuration fields - types match ProcessInputStepArgs
-                model: model!,
+                // The agent loop supplies a resolved model to processInputStep.
+                model: model as MastraLanguageModel,
                 tools,
                 toolChoice,
                 activeTools,
@@ -1736,8 +1738,8 @@ export function createStepFromProcessor<TProcessorId extends string>(
   } satisfies Step<
     `processor:${TProcessorId}`,
     unknown,
-    InferStandardSchemaOutput<typeof ProcessorStepInputSchema>,
-    InferStandardSchemaOutput<typeof ProcessorStepOutputSchema>,
+    ProcessorStepOutput,
+    ProcessorStepOutput,
     unknown,
     unknown,
     DefaultEngineType

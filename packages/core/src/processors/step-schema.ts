@@ -207,7 +207,7 @@ export type ProcessorStepOutputType = {
   part?: unknown | null;
   streamParts?: unknown[];
   state?: Record<string, unknown>;
-  result?: SerializableOutputResult;
+  result?: unknown;
   finishReason?: string;
   /** Provider-specific metadata for the step (e.g. Bedrock guardrail trace). */
   providerMetadata?: Record<string, unknown>;
@@ -221,7 +221,7 @@ export type ProcessorStepOutputType = {
   args?: unknown;
   toolResultValue?: unknown;
   providerExecuted?: boolean;
-  model?: MastraLanguageModel;
+  model?: ProcessorStepModelConfig;
   tools?: ProcessorStepToolsConfig;
   toolChoice?: ToolChoice<ToolSet>;
   activeTools?: string[];

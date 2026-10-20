@@ -3,10 +3,10 @@ import { Agent, MessageList, TripWire } from '@mastra/core/agent';
 import type { MastraDBMessage } from '@mastra/core/agent';
 import { ErrorCategory, ErrorDomain, MastraError } from '@mastra/core/error';
 import type { MastraScorers } from '@mastra/core/evals';
-import type { CoreMessage } from '@mastra/core/llm';
+import type { CoreMessage, LanguageModel } from '@mastra/core/llm';
 import type { TracingContext } from '@mastra/core/observability';
 import { EntityType, SpanType } from '@mastra/core/observability';
-import type { Processor, ProcessorStepOutput, ProcessorStepInputSchema, OutputResult } from '@mastra/core/processors';
+import type { Processor, ProcessorStepOutput, OutputResult } from '@mastra/core/processors';
 import {
   ProcessorRunner,
   ProcessorState,
@@ -205,8 +205,8 @@ export function createStep<TProcessorId extends string>(
 ): Step<
   `processor:${TProcessorId}`,
   unknown,
-  InferPublicSchema<typeof ProcessorStepInputSchema>,
-  InferPublicSchema<typeof ProcessorStepOutputSchema>,
+  ProcessorStepOutput,
+  ProcessorStepOutput,
   unknown,
   unknown,
   InngestEngineType
@@ -663,7 +663,8 @@ function createStepFromProcessor<TProcessorId extends string>(
                 stepNumber: stepNumber ?? 0,
                 systemMessages: (systemMessages ?? []) as CoreMessage[],
                 // Pass model/tools configuration fields - types match ProcessInputStepArgs
-                model: model!,
+                // The agent loop supplies a resolved model to processInputStep.
+                model: model as LanguageModel,
                 tools,
                 toolChoice,
                 activeTools,
